@@ -1,7 +1,7 @@
 
-class ExampleConnection : Connection {
+class GitterConnection : Connection {
 
-    ExampleConnection() {
+    GitterConnection() {
         # Implement any needed initialization steps
     }
 

@@ -1,8 +1,8 @@
 
-class ExampleBackend : Backend {
+class GitterBackend : Backend {
 
     # Constructor
-    ExampleBackend ([string]$Token) {
+    GitterBackend ([string]$Token) {
         # Implement any needed initialization steps
     }
 

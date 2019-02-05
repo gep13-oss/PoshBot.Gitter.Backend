@@ -1,5 +1,5 @@
 
-function New-PoshBotExampleBackend {
+function New-PoshBotGitterBackend {
     <#
     .SYNOPSIS
         Creates a new instance of the example PoshBot backend class.
