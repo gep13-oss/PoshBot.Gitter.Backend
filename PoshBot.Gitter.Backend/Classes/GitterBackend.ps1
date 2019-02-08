@@ -2,17 +2,23 @@
 class GitterBackend : Backend {
 
     # Constructor
-    GitterBackend ([string]$Token) {
-        # Implement any needed initialization steps
+    GitterBackend ([string]$Token, [string]$RoomId) {
+        $config = [ConnectionConfig]::new()
+        $secToken = $Token | ConvertTo-SecureString -AsPlainText -Force
+        $config.Credential = New-Object System.Management.Automation.PSCredential('asdf', $secToken)
+        $config.Endpoint = $RoomId
+        $conn = [GitterConnection]::New()
+        $conn.Config = $config
+        $this.Connection = $conn
     }
 
     # Connect to the chat network
     [void]Connect() {
-        # Include logic to connect to the chat network
-
-        # The actual logic to connect to the chat network
-        # should be in the [Connection] object
+        $this.LogInfo('Connecting to backend')
         $this.Connection.Connect()
+        $this.BotId = $this.GetBotIdentity()
+        $this.LoadUsers()
+        $this.LoadRooms()
     }
 
     # Disconnect from the chat network
@@ -69,5 +75,48 @@ class GitterBackend : Backend {
         # Do something using the network APIs to
         # resolve a username from an Id and return it
         return 'JoeUser'
+    }
+
+    [void]LoadUsers() {
+        $this.LogDebug('Getting Gitter Room Users')
+
+        #$allUsers = Get-Slackuser -Token $this.Connection.Config.Credential.GetNetworkCredential().Password -Verbose:$false
+
+        $token = $this.Config.Credential.GetNetworkCredential().Password
+        $roomId = $this.Config.Endpoint
+        $restParams = @{
+            ContentType = 'application/json'
+            Verbose = $false
+            Headers = @{
+                Authorization = "Bearer $($token)"
+            }
+            Uri = "https://api.gitter.im/v1/rooms/$roomId/users"
+        }
+        $allUsers = Invoke-RestMethod @restParams
+
+        $this.LogDebug("[$($allUsers.Count)] users returned")
+        $allUsers | ForEach-Object {
+            $user = [GitterPerson]::new()
+            $user.Id = $_.id
+            $user.DisplayName = $_.displayname
+            $user.Url = $_.url
+            $user.AvatarUrl = $_.avatarUrl
+            $user.AvatarUrlSmall = $_.avatarUrlSmall
+            $user.AvatarUrlMedium = $_.avatarUrlMedium
+            $user.Role = $_.role
+            $user.V = $_.v
+            $user.GV = $_.gv
+            if (-not $this.Users.ContainsKey($_.ID)) {
+                $this.LogDebug("Adding user [$($_.ID):$($_.Name)]")
+                $this.Users[$_.ID] =  $user
+            }
+        }
+
+        foreach ($key in $this.Users.Keys) {
+            if ($key -notin $allUsers.ID) {
+                $this.LogDebug("Removing outdated user [$key]")
+                $this.Users.Remove($key)
+            }
+        }
     }
 }
