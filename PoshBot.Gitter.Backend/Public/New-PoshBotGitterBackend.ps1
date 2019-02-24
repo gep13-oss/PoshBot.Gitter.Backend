@@ -9,7 +9,7 @@ function New-PoshBotGitterBackend {
         Hashtable of required properties needed by the backend to initialize and
         connect to the backend chat network.
     .EXAMPLE
-        PS C:\> $config = @{Name = 'GitterBackend'; Token = '<API-TOKEN>'}
+        PS C:\> $config = @{Name = 'GitterBackend'; Token = '<API-TOKEN>'; RoomId = '<ROOM-ID>'}
         PS C:\> $backend = New-PoshBotGitterBackend -Configuration $config
 
         Create a hashtable containing required properties for the backend
@@ -34,11 +34,7 @@ function New-PoshBotGitterBackend {
             } else {
                 Write-Verbose 'Creating new Gitter backend instance'
 
-                # Note that [token] is just an example
-                # In a real backend plugin, you would pass any
-                # needed information from $Configuration to
-                # the constructor
-                $backend = [GitterBackend]::new($item.Token)
+                $backend = [GitterBackend]::new($item.Token, $item.RoomId)
                 if ($item.Name) {
                     $backend.Name = $item.Name
                 }
